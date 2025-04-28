@@ -22,7 +22,7 @@ setup(
         "detectron2",
         "opencv-python",
         "pandas",
-        "sklearn",
+        "scikit-learn",
         "tensorboard",
     ],
     extras_require={"tensorboard_video_visualization": ["moviepy"]},

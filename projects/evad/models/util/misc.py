@@ -11,6 +11,7 @@ from collections import defaultdict, deque
 import datetime
 import pickle
 from typing import Optional, List
+from packaging.version import Version
 
 import torch
 import torch.distributed as dist
@@ -18,7 +19,7 @@ from torch import Tensor
 
 # needed due to empty tensor bug in pytorch and torchvision 0.5
 import torchvision
-if float(torchvision.__version__[:3]) < 0.7:
+if Version(torchvision.__version__) < Version('0.7.0'):
     from torchvision.ops import _new_empty_tensor
     from torchvision.ops.misc import _output_size
 

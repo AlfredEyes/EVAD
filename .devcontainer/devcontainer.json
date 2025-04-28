@@ -1,0 +1,23 @@
+{
+    "name": "AlfredLab_EVAD",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "workspace",
+    "workspaceFolder": "/alfred/workspace",
+    "containerUser": "alfred",
+    "remoteUser": "alfred",
+    "updateRemoteUserUID": true,
+    "customizations": {
+        "vscode": {
+            "settings": { 
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "python.pythonPath": "/usr/bin/python"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter",
+                "github.vscode-pull-request-github",
+                "ms-azuretools.vscode-docker"
+            ]
+        }
+    }
+}

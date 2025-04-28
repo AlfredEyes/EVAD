@@ -8,8 +8,10 @@ from iopath.common.file_io import g_pathmgr
 
 logger = logging.getLogger(__name__)
 
-FPS = 30
-AVA_VALID_FRAMES = range(902, 1799)
+#FPS = 30
+FPS = 15
+#AVA_VALID_FRAMES = range(902, 1799)
+AVA_VALID_FRAMES = range(0, 1799)
 
 
 def load_image_lists(cfg, is_train):
@@ -133,7 +135,7 @@ def get_keyframe_data(boxes_and_labels):
         0: 900
         30: 901
         """
-        return (sec - 900) * FPS
+        return sec * FPS
 
     keyframe_indices = []
     keyframe_boxes_and_labels = []
@@ -199,10 +201,18 @@ def parse_bboxes_file(
                 row = line.strip().split(",")
                 # When we use predicted boxes to train/eval, we need to
                 # ignore the boxes whose scores are below the threshold.
-                if not is_gt_box:
-                    score = float(row[7])
-                    if score < detect_thresh:
-                        continue
+
+                # FIXME I don't know what's wrong here, but row[7]
+                # in AVA is the person id, not a "detection" score
+                # some SlowFast idiosyncrasies probably
+                # anyway, ignore that control statement
+
+                #if not is_gt_box:
+                #    score = float(row[7])
+                #    if score < detect_thresh:
+                #        continue
+
+                # FIXME end
 
                 video_name, frame_sec = row[0], int(row[1])
                 if frame_sec % boxes_sample_rate != 0:

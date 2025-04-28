@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  workspace:
+    env_file:
+      - "${PROJECT_DIR}/.devcontainer/.env"
+    build:
+      context: "${PROJECT_DIR}"
+      dockerfile: "${PROJECT_DIR}/.devcontainer/Dockerfile"
+      args:
+        USER: ${USER}
+    container_name: "${USER}_EVAD"
+    image: alfredlab
+    shm_size: 32gb
+    command: /bin/bash -c 'while sleep 1000; do :; done'
+    environment:
+      USER: ${USER}
+    volumes:
+      - "${PROJECT_DIR}:/alfred/workspace"
+      - "${EXTERNAL_DATASETS}:/datasets/dataset_external:rw"
+      - "${RAW_DATASETS}:/datasets/raw_data:ro"
+      - "${PROCESSED_DATASETS}:/datasets/processed_data:rw"
+      - "${HOME}/.ssh:/alfred/.ssh:rw"
+      - "${AVA}:/datasets/ava:ro"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

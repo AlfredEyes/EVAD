@@ -12,6 +12,11 @@
 
 Please find installation instructions in [INSTALL.md](INSTALL.md). 
 
+If using the container :
+```
+pip install --editable .
+```
+
 ## Data Preparation
 
 Please follow the instructions in [DATASET.md](slowfast/datasets/DATASET.md) to prepare AVA dataset.
@@ -30,6 +35,20 @@ Please follow the instructions in [DATASET.md](slowfast/datasets/DATASET.md) to 
 
 ```
 python -m torch.distributed.launch --nproc_per_node=8 projects/evad/run_net.py --cfg "projects/evad/configs/config_file.yaml" DATA.PATH_TO_DATA_DIR "path/to/ava" TRAIN.CHECKPOINT_FILE_PATH "path/to/pretrain.pth" OUTPUT_DIR "path/to/output"
+```
+
+eg.
+
+```
+CUDA_VISIBLE_DEVICES=2 torchrun \
+  --standalone \
+  --nnodes=1 \
+  --nproc_per_node=1 \
+  projects/evad/run_net.py \
+  --cfg ViT_B_16x4_KTP_alfred.yaml \
+    DATA.PATH_TO_DATA_DIR /datasets/ava/2.2.8/AVA \
+    TRAIN.CHECKPOINT_FILE_PATH vitb-k710+k400.pth \
+    OUTPUT_DIR output/
 ```
 
 ## Validation

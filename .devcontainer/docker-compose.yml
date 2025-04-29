@@ -21,6 +21,8 @@ services:
       - "${PROCESSED_DATASETS}:/datasets/processed_data:rw"
       - "${HOME}/.ssh:/alfred/.ssh:rw"
       - "${AVA}:/datasets/ava:ro"
+    ports:
+      - 6006:6006
     deploy:
       resources:
         reservations:

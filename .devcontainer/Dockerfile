@@ -16,7 +16,10 @@ RUN pip install pytest cython simplejson iopath psutil opencv-python pandas tens
 RUN git clone https://github.com/facebookresearch/detectron2.git \
     && python -m pip install -e detectron2
 
-RUN conda install av -c conda-forge
+RUN conda update -n base conda -y && \
+    conda config --add channels conda-forge && \
+    conda config --set channel_priority strict && \
+    conda install av -c conda-forge -y
 
 # Setup mountpoints
 RUN mkdir -p /datasets/external_data

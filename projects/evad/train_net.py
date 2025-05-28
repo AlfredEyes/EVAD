@@ -48,6 +48,9 @@ def train_epoch(
     train_meter.iter_tic()
     data_size = len(train_loader)
 
+    optimizer.zero_grad()
+    accumulation_steps = cfg.TRAIN.EFFECTIVE_BATCH_SIZE // cfg.TRAIN.BATCH_SIZE
+
     for cur_iter, batch in enumerate(train_loader):
         inputs, labels, _, meta = zip(*batch)
         if writer is not None:
@@ -74,42 +77,49 @@ def train_epoch(
         misc.check_nan_losses(loss)
 
         # Perform the backward pass.
-        optimizer.zero_grad()
+        loss = loss / accumulation_steps
         loss.backward()
 
-        # Update the parameters.
-        optimizer.step()
+        # Perform optimizer step after accumulation_steps
+        if (cur_iter + 1) % accumulation_steps == 0:
+            optimizer.step()  # Update weights
+            optimizer.zero_grad()  # Clear gradients for next accumulation cycle
 
-        if cfg.DETECTION.ENABLE:
-            if cfg.NUM_GPUS > 1:
-                loss = du.all_reduce([loss])[0]
+            if cfg.DETECTION.ENABLE:
+                if cfg.NUM_GPUS > 1:
+                    loss = du.all_reduce([loss])[0]
+                    for k, v in loss_dict.items():
+                        loss_dict[k] = du.all_reduce([v])[0]
+                loss = loss.item()
                 for k, v in loss_dict.items():
-                    loss_dict[k] = du.all_reduce([v])[0]
-            loss = loss.item()
-            for k, v in loss_dict.items():
-                loss_dict[k] = v.item()
+                    loss_dict[k] = v.item()
 
-            # Update and log stats.
-            train_meter.update_stats(None, None, None, loss, lr, loss_dict)
-            # write to tensorboard format if available.
-            if writer is not None:
-                writer.add_scalars(
-                    {"Train/loss": loss, "Train/lr": lr,
-                     "Train/loss_ce": loss_dict['loss_ce'],
-                     "Train/loss_bce": loss_dict['loss_bce'],
-                     "Train/loss_bbox": loss_dict['loss_bbox'],
-                     "Train/loss_giou": loss_dict['loss_giou'],
-                     "Max Mem": torch.cuda.max_memory_allocated() / 1024.0 / 1024.0,
-                     },
-                    global_step=data_size * cur_epoch + cur_iter,
-                )
+                # Update and log stats.
+                train_meter.update_stats(None, None, None, loss, lr, loss_dict)
+                # write to tensorboard format if available.
+                if writer is not None:
+                    writer.add_scalars(
+                        {"Train/loss": loss, "Train/lr": lr,
+                         "Train/loss_ce": loss_dict['loss_ce'],
+                         "Train/loss_bce": loss_dict['loss_bce'],
+                         "Train/loss_bbox": loss_dict['loss_bbox'],
+                         "Train/loss_giou": loss_dict['loss_giou'],
+                         "Max Mem": torch.cuda.max_memory_allocated() / 1024.0 / 1024.0,
+                         },
+                        global_step=data_size * cur_epoch + cur_iter,
+                    )
 
-        else:
-            raise NotImplementedError
+            else:
+                raise NotImplementedError
 
         train_meter.iter_toc()  # measure allreduce for this meter
         train_meter.log_iter_stats(cur_epoch, cur_iter)
         train_meter.iter_tic()
+
+    # Handle remaining batches if dataloader size isn't divisible by accumulation_steps
+    if (cur_iter + 1) % accumulation_steps != 0:
+        optimizer.step()
+        optimizer.zero_grad()
 
     # Log epoch stats.
     train_meter.log_epoch_stats(cur_epoch)

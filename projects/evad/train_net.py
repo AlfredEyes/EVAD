@@ -49,6 +49,7 @@ def train_epoch(
     data_size = len(train_loader)
 
     optimizer.zero_grad()
+    total_loss = 0.0
     accumulation_steps = cfg.TRAIN.EFFECTIVE_BATCH_SIZE // cfg.TRAIN.BATCH_SIZE
 
     for cur_iter, batch in enumerate(train_loader):
@@ -72,6 +73,7 @@ def train_epoch(
 
         # Compute the loss.
         loss = sum(loss_dict.values()) / len(loss_dict)
+        total_loss += loss.item()
 
         # check Nan Loss.
         misc.check_nan_losses(loss)
@@ -99,7 +101,7 @@ def train_epoch(
                 # write to tensorboard format if available.
                 if writer is not None:
                     writer.add_scalars(
-                        {"Train/loss": loss, "Train/lr": lr,
+                        {"Train/loss": total_loss, "Train/lr": lr,
                          "Train/loss_ce": loss_dict['loss_ce'],
                          "Train/loss_bce": loss_dict['loss_bce'],
                          "Train/loss_bbox": loss_dict['loss_bbox'],

@@ -131,12 +131,12 @@ class KTPAttention(Attention):
         B, N, C = x.shape
         if self.keep_rate < 1:
             if self.use_checkpoint:
-                x, attn = checkpoint.checkpoint(self.forward_part1, x)
+                x, attn = checkpoint.checkpoint(self.forward_part1, x, use_reentrant=False)
             else:
                 x, attn = self.forward_part1(x)
         else:
             if self.use_checkpoint:
-                x = checkpoint.checkpoint(self.forward_part1, x)
+                x = checkpoint.checkpoint(self.forward_part1, x, use_reentrant=False)
             else:
                 x = self.forward_part1(x)
 
@@ -224,7 +224,7 @@ class KTPBlock(nn.Module):
 
         # mlp
         if self.use_checkpoint:
-            x = x + checkpoint.checkpoint(self.forward_part2, x)
+            x = x + checkpoint.checkpoint(self.forward_part2, x, use_reentrant=False)
         else:
             x = x + self.forward_part2(x)
 
@@ -389,7 +389,7 @@ class ContextRefinementDecoder(nn.Module):
 
         for blk in self.blocks:
             if self.use_checkpoint:
-                x, action_logits = checkpoint.checkpoint(blk, x)
+                x, action_logits = checkpoint.checkpoint(blk, x, use_reentrant=False)
             else:
                 x, action_logits = blk(x)
             inter_action_logits.append(action_logits)
